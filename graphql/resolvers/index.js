@@ -3,18 +3,32 @@ const bcrypt = require('bcryptjs');
 const Event = require('../../models/event');
 const User = require('../../models/user');
 const Booking = require('../../models/booking');
+const { dateToString } = require('../../helpers/date');
+
+const transformEvent = event => {
+  return {
+    ...event._doc,
+    _id: event.id,
+    date: dateToString(event._doc.date),
+    creator: user.bind(this, event._doc.creator)
+  };
+};
+
+const transformBooking = booking => {
+  return {
+    ...booking,
+    _id: booking.id,
+    user: user.bind(this, booking._doc.user),
+    event: singleEvent.bind(this, booking._doc.event),
+    createdAt: dateToString(booking._doc.createdAt),
+    updatedAt: dateToString(booking._doc.updatedAt)
+  };
+};
 
 const events = async eventIds => {
   try {
     const eventsData = await Event.find({ _id: { $in: eventIds } });
-    return eventsData.map(event => {
-      return {
-        ...event._doc,
-        _id: event.id,
-        date: new Date(event._doc.date).toISOString(),
-        creator: user.bind(this, event._doc.creator)
-      };
-    });
+    return eventsData.map(event => transformEvent(event));
   } catch (err) {
     throw err;
   }
@@ -23,12 +37,7 @@ const events = async eventIds => {
 const singleEvent = async eventId => {
   try {
     const eventData = await Event.findById(eventId);
-    return {
-      ...eventData._doc,
-      _id: eventData.id,
-      date: new Date(eventData._doc.date).toISOString(),
-      creator: user.bind(this, eventData._doc.creator)
-    };
+    return transformEvent(eventData);
   } catch (err) {
     throw err;
   }
@@ -51,14 +60,7 @@ module.exports = {
   events: async () => {
     try {
       const events = await Event.find();
-      return events.map(e => {
-        return {
-          ...e._doc,
-          _id: e.id,
-          date: new Date(e._doc.date).toISOString(),
-          creator: user.bind(this, e._doc.creator)
-        };
-      });
+      return events.map(e => transformEvent(e));
     } catch (err) {
       console.log(err);
       throw err;
@@ -68,16 +70,7 @@ module.exports = {
   bookings: async () => {
     try {
       const bookings = await Booking.find();
-      return bookings.map(booking => {
-        return {
-          ...booking,
-          _id: booking.id,
-          user: user.bind(this, booking._doc.user),
-          event: singleEvent.bind(this, booking._doc.event),
-          createdAt: new Date(booking._doc.createdAt).toISOString(),
-          updatedAt: new Date(booking._doc.updatedAt).toISOString()
-        };
-      });
+      return bookings.map(booking => transformBooking(booking));
     } catch (err) {
       throw err;
     }
@@ -102,12 +95,7 @@ module.exports = {
       foundUser.createdEvents.push(createdEvent);
       await foundUser.save();
 
-      return {
-        ...result._doc,
-        _id: result.id,
-        date: new Date(result._doc.date).toISOString(),
-        creator: user.bind(this, result._doc.creator)
-      };
+      return transformEvent(result);
     } catch (err) {
       throw err;
     }
@@ -137,14 +125,7 @@ module.exports = {
         event: fetchedEvent
       });
       const result = await booking.save();
-      return {
-        ...result,
-        _id: result.id,
-        user: user.bind(this, result._doc.user),
-        event: singleEvent.bind(this, result._doc.event),
-        createdAt: new Date(result._doc.createdAt).toISOString(),
-        updatedAt: new Date(result._doc.updatedAt).toISOString()
-      };
+      return transformBooking(result);
     } catch (err) {
       throw err;
     }
@@ -153,11 +134,7 @@ module.exports = {
   cancelBooking: async ({ bookingId }) => {
     try {
       const fetchedBooking = await Booking.findById(bookingId).populate('event');
-      const event = {
-        ...fetchedBooking.event._doc,
-        _id: fetchedBooking.event.id,
-        creator: user.bind(this, fetchedBooking.event._doc.creator)
-      };
+      const event = transformEvent(fetchedBooking.event);
       await Booking.deleteOne({ _id: bookingId });
       return event;
     } catch (err) {
