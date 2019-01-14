@@ -1,11 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useContext } from 'react';
 
 import './Auth.css';
+import AuthContext from '../context/auth-context';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const emailEl = useRef();
   const passwordEl = useRef();
+  const { login } = useContext(AuthContext);
 
   const switchModeHandler = () => setIsLogin(!isLogin);
 
@@ -57,7 +59,13 @@ const AuthPage = () => {
         return result.json();
       })
       .then(resData => {
-        console.log(resData);
+        if (resData.data.login.token) {
+          login(
+            resData.data.login.token,
+            resData.data.login.userId,
+            resData.data.login.tokenExpiration
+          );
+        }
       })
       .catch(err => {
         console.log(err);
