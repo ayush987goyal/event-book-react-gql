@@ -3,23 +3,28 @@ import React, { useState, useRef, useContext, useEffect } from 'react';
 import Modal from '../components/Modal/Modal';
 import Backdrop from '../components/Backdrop/Backdrop';
 import EventList from '../components/Events/EventList/EventList';
+import Spinner from '../components/Spinner/Spinner';
 import AuthContext from '../context/auth-context';
 import './Events.css';
 
 const EventsPage = () => {
-  const { token } = useContext(AuthContext);
+  const { token, userId } = useContext(AuthContext);
   const [creating, setCreating] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const titleRef = useRef();
   const priceRef = useRef();
   const dateRef = useRef();
   const descriptionRef = useRef();
-  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
   const fetchEvents = () => {
+    setLoading(true);
+
     let requestBody = {
       query: `
         query {
@@ -46,6 +51,7 @@ const EventsPage = () => {
       }
     })
       .then(result => {
+        setLoading(false);
         if (result.status !== 200 && result.status !== 201) {
           throw new Error('Failed!');
         }
@@ -55,6 +61,7 @@ const EventsPage = () => {
         setEvents(resData.data.events);
       })
       .catch(err => {
+        setLoading(false);
         console.log(err);
       });
   };
@@ -86,15 +93,12 @@ const EventsPage = () => {
             price
             description
             date
-            creator {
-              _id
-              email
-            }
           }
         }
       `
     };
 
+    setLoading(true);
     fetch('http://localhost:4000/graphql', {
       method: 'POST',
       body: JSON.stringify(requestBody),
@@ -104,15 +108,17 @@ const EventsPage = () => {
       }
     })
       .then(result => {
+        setLoading(false);
         if (result.status !== 200 && result.status !== 201) {
           throw new Error('Failed!');
         }
         return result.json();
       })
       .then(resData => {
-        fetchEvents();
+        setEvents([...events, { ...resData.data.createEvent, creator: { _id: userId } }]);
       })
       .catch(err => {
+        setLoading(false);
         console.log(err);
       });
   };
@@ -162,7 +168,7 @@ const EventsPage = () => {
           </button>
         </div>
       )}
-      <EventList events={events} />
+      {loading ? <Spinner /> : <EventList events={events} />}
     </>
   );
 };
