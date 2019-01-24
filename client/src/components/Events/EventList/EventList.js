@@ -1,6 +1,7 @@
 import React from 'react';
 
 import EventItem from './EventItem/EventItem';
+
 import './EventList.css';
 
 const EventList = props => (
@@ -13,6 +14,7 @@ const EventList = props => (
         price={e.price}
         date={e.date}
         creator={e.creator._id}
+        onDetail={props.onViewDetail}
       />
     ))}
   </ul>

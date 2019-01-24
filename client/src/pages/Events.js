@@ -9,9 +9,11 @@ import './Events.css';
 
 const EventsPage = () => {
   const { token, userId } = useContext(AuthContext);
+
   const [creating, setCreating] = useState(false);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const titleRef = useRef();
   const priceRef = useRef();
@@ -125,6 +127,15 @@ const EventsPage = () => {
 
   const modalCancelHandler = () => {
     setCreating(false);
+    setSelectedEvent(null);
+  };
+
+  const showDetailHandler = eventId => {
+    setSelectedEvent(events.find(e => e._id === eventId));
+  };
+
+  const bookEventHandler = () => {
+    setSelectedEvent(null);
   };
 
   return (
@@ -136,6 +147,7 @@ const EventsPage = () => {
             title="Add Event"
             canCancel
             canConfirm
+            confirmText="Confirm"
             onCancel={modalCancelHandler}
             onConfirm={modalConfirmHandelr}
           >
@@ -160,6 +172,25 @@ const EventsPage = () => {
           </Modal>
         </>
       )}
+      {selectedEvent && (
+        <>
+          <Backdrop />
+          <Modal
+            title={selectedEvent.title}
+            canCancel
+            canConfirm
+            confirmText="Book"
+            onCancel={modalCancelHandler}
+            onConfirm={bookEventHandler}
+          >
+            <h1>{selectedEvent.title}</h1>
+            <h2>
+              ${selectedEvent.price} - {new Date(selectedEvent.date).toLocaleDateString()}
+            </h2>
+            <p>{selectedEvent.description}</p>
+          </Modal>
+        </>
+      )}
       {token && (
         <div className="events-control">
           <p>Share your own Events!</p>
@@ -168,7 +199,7 @@ const EventsPage = () => {
           </button>
         </div>
       )}
-      {loading ? <Spinner /> : <EventList events={events} />}
+      {loading ? <Spinner /> : <EventList events={events} onViewDetail={showDetailHandler} />}
     </>
   );
 };
