@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 
 import BookingList from '../components/Bookings/BookingList/BookingList';
+import BookingsChart from '../components/Bookings/BookingsChart/BookingsChart';
+import BookingControls from '../components/Bookings/BookingControls/BookingControl';
 import Spinner from '../components/Spinner/Spinner';
 import AuthContext from '../context/auth-context';
 
@@ -9,6 +11,7 @@ const BookingsPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState([]);
+  const [outputType, setOutputType] = useState('list');
 
   useEffect(() => {
     fetchBooking();
@@ -27,6 +30,7 @@ const BookingsPage = () => {
               _id
               title
               date
+              price
             }
           }
         }
@@ -96,10 +100,23 @@ const BookingsPage = () => {
       });
   };
 
+  const changeOutputTypeHandler = optType => {
+    setOutputType(optType);
+  };
+
   return (
     <>
       {loading && <Spinner />}
-      <BookingList bookings={bookings} onCancel={cancelBookingHandler} />
+      <>
+        <BookingControls onChange={changeOutputTypeHandler} activeOutputType={outputType} />
+        <div>
+          {outputType === 'list' ? (
+            <BookingList bookings={bookings} onCancel={cancelBookingHandler} />
+          ) : (
+            <BookingsChart bookings={bookings} />
+          )}
+        </div>
+      </>
     </>
   );
 };

@@ -61,7 +61,7 @@ const AuthPage = () => {
         return result.json();
       })
       .then(resData => {
-        if (resData.data.login.token) {
+        if (isLogin && resData.data.login.token) {
           login(
             resData.data.login.token,
             resData.data.login.userId,
